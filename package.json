@@ -1,0 +1,20 @@
+{
+  "name": "wow-discord-blackboard-bot",
+  "version": "1.2.0",
+  "description": "Discord bot for WoW blackboard posts with templates and quick embeds",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "register": "node scripts/register-commands.js",
+    "register:guild": "node scripts/register-commands.js --guild",
+    "lint": "echo \"(optional) add eslint if you want\""
+  },
+  "author": "Domekologe",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.5"
+  }
+}
