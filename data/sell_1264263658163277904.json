@@ -1,0 +1,25 @@
+[
+  {
+    "id": 1,
+    "title": "Test Verkauf",
+    "seller": "Domekologe",
+    "sellerId": "485837048184307724",
+    "quantityMode": "items",
+    "quantity": 200,
+    "mode": "multi",
+    "scope": "personal",
+    "priceType": "gold",
+    "priceQuantity": 20,
+    "priceItemId": null,
+    "pricePer": "per_item",
+    "ownerId": "485837048184307724",
+    "ownerTag": "domekologe",
+    "takenBy": [
+      "485837048184307724"
+    ],
+    "channelId": null,
+    "messageId": null,
+    "closed": false,
+    "wowItemId": 53010
+  }
+]

@@ -1,0 +1,148 @@
+{
+  "buttons": {
+    "claim": "Claim",
+    "unclaim": "Unclaim",
+    "close": "Close",
+    "remove": "Remove",
+    "change": "Change",
+    "ok": "OK",
+    "cancel": "Cancel"
+  },
+  "fields": {
+    "requester": "Requester",
+    "requestType": "Request Type",
+    "mode": "Mode",
+    "searchedItem": "Searched Item",
+    "quantity": "Quantity",
+    "reward": "Reward",
+    "claimedBy": "Claimed by",
+    "fields.itemTooltipTitle" : "Item",
+    "tooltip.itemLevel" : "Itemlevel",
+    "tooltip.maxStack" : "Maxmium per Stack",
+    "itemTooltipTitle":"Tooltip"
+  },
+  "embed": {
+    "titlePrefix": "📋",
+    "order": "Blackboard Order #{id}",
+    "closedSuffix": " — CLOSED"
+  },
+  "quantity": {
+    "infinite": "∞",
+    "items": "{n} item(s)",
+    "stacks": "{n} stack(s)"
+  },
+  "reward": {
+    "goldPerItem": "{n} gold (per item)",
+    "goldPerStack": "{n} gold (per stack)",
+    "itemPerItem": "{n} × ItemID {id} (per item)",
+    "itemPerStack": "{n} × ItemID {id} (per stack)"
+  },
+  "msg": {
+    "orderCreated": "Order #{id} created: **{title}**",
+    "orderUpdated": "Order #{id} updated.",
+    "orderRemoved": "Order #{id} removed.",
+    "orderClosed": "This order is closed.",
+    "orderClosedNoChange": "This order is closed and cannot be changed.",
+    "orderNotFound": "Order not found.",
+    "noRewardItem": "Reward type is 'Item' but no reward_item_id was provided.",
+    "invalidQuantity": "Please provide a valid 'quantity' for items/stacks mode (>= 1).",
+    "tookOrder": "You took order #{id}: **{title}**",
+    "multipleFound": "Multiple items found for **{q}** — please pick one and press **OK**.",
+    "noneFound": "No items found for **{q}**. Try a more specific name or an ID.",
+    "selectionExpired": "Selection expired. Please start the flow again.",
+    "selectFirst": "Please select an item first.",
+    "notAllowedChannel": "You cannot use this command in this channel.",
+    "scopeGuildOnlyMods": "Only moderators can use request type 'Guild'.",
+    "requesterOnlySelf": "Only moderators can set a different requester.",
+    "rewardItemMissing": "Reward type is 'Item'. Please provide a reward item (name or ID) or reward_item_id.",
+    "multipleRewardFound": "Multiple reward items found for **{q}** — please pick one and press **OK**."
+  },
+  "setup": {
+    "title": "Blackboard Setup",
+    "pickLang": "Select your guild language…",
+    "langSet": "Language set to **{lang}**.",
+    "langEN": "English",
+    "langDE": "German",
+    "modRoleAdded": "Added moderator role: <@&{id}>",
+    "modRoleRemoved": "Removed moderator role: <@&{id}>",
+    "channelAdded": "Allowed channel: <#{id}>",
+    "channelRemoved": "Removed channel: <#{id}>",
+    "configHeader": "**Current config**",
+    "configNone": "_none_"
+  },
+    "wizard": {
+      "checkDm": "📩 I've sent you a DM with the wizard.",
+      "startTitle": "Blackboard Wizard",
+      "chooseAction": "What do you want to do?",
+      "create": "Create new entry",
+      "change": "Change existing entry",
+      "cancel": "Cancel",
+      "mode":{
+        "single":"Single",
+        "multi":"Multi"
+      },
+      "scope":{
+        "personal":"Personal",
+        "guild":"Guild"
+      },
+      "cancelled": "Wizard cancelled.",
+      "ask": {
+        "title": "Enter a title",
+        "item": "Enter the item (name or ID)",
+        "quantityMode": "Pick the quantity type",
+        "quantity": "Enter the quantity (>=1)",
+        "mode": "Pick the mode",
+        "scope": "Pick the request type",
+        "rewardType": "Pick the reward type",
+        "rewardItem": "Enter the reward item (name or ID)",
+        "rewardQty": "Enter the reward quantity",
+        "rewardPer": "Reward applies per…"
+      },
+      "label":{
+        "single" : "Single Order",
+        "multi" : "Multi Order",
+        "items" : "Items",
+        "stacks" : "Stacks",
+        "infinite" : "Infinite Order",
+        "personal" : "Personal Request",
+        "guild" : "Guild Request",
+        "gold" : "Gold",
+        "item" : "Item",
+        "per_item" : "Per Item",
+        "confirmSave" : "Confirm",
+        "cancel" : "Cancel",
+        "per_stack" : "Per Stack"
+      },
+      "multipleFound": "Multiple items found for **{q}** — please pick one and press **OK**.",
+      "summaryTitle": "Summary",
+      "confirmCreate": "Create",
+      "confirmSave": "Save",
+      "back": "Back",
+      "enterNumber": "Enter a number (0 = save)",
+      "fieldPickerTitle": "Which field to change?",
+      "changed": "Updated.",
+      "saved": "✅ Saved.",
+      "hint":{
+        "typeAnswer" : "Order for Food",
+        "item" : "Noodle Soup",
+        "number" : "20",
+        "number0" : "20"
+    },
+    "started":"Wizard Started",
+    "titleSaved":"Title Saved",
+    "typeconfirm":"Type confirm to save, or cancel to abort."
+    },
+    "summary":{
+      "title" : "Title",
+      "item" : "Item",
+      "qty" : "Quantity",
+      "mode" : "Mode",
+      "scope" : "Scope",
+      "reward" : "Reward"
+  },
+  "confirmQuestion":"Wizard Started",
+  "summaryTitle":"Wizard Started",
+  "tooltip":{
+    "itemLevel":"Item Level"
+  }
+}

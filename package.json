@@ -1,20 +1,17 @@
 {
   "name": "wow-discord-blackboard-bot",
-  "version": "1.2.0",
-  "description": "Discord bot for WoW blackboard posts with templates and quick embeds",
-  "main": "index.js",
+  "version": "1.3.0",
+  "description": "Discord 'Schwarzes Brett' Bot (MoP Classic, EU/de) auf Basis von discord.js",
   "type": "module",
   "scripts": {
-    "start": "node index.js",
-    "dev": "node --watch index.js",
-    "register": "node scripts/register-commands.js",
-    "register:guild": "node scripts/register-commands.js --guild",
-    "lint": "echo \"(optional) add eslint if you want\""
+    "dev": "node --env-file=.env src/index.js",
+    "start": "node --env-file=.env src/index.js",
+    "register": "node --env-file=.env src/register-commands.js"
   },
-  "author": "Domekologe",
-  "license": "MIT",
   "dependencies": {
+    "better-sqlite3": "^9.4.0",
     "discord.js": "^14.16.3",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "undici": "^6.19.8"
   }
 }
