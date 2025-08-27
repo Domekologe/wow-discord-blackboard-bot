@@ -1,8 +1,9 @@
 // sellFeature.js
 // "Ich verkaufe" feature (separate from buy/“Ich suche”)
-// - Slash cmds: /sell-create, /sell-list, /sell-remove, /sell-change (optional)
-// - Buttons: Buy / Unbuy (+ Close / Remove / Change for seller+mods)
-// - Locale keys expected (see bottom comment)
+// - Slash cmds: /sell-create, /sell-list, /sell-remove  (optional: /sell-change -> only hint)
+// - Buttons: Buy / Unbuy (+ Close / Remove / Change for seller+mods; Open only for owner when closed)
+// - Localized via i18n keys (see notes at bottom)
+// Comments in English
 // Author: Domekologe
 
 import {
@@ -11,33 +12,57 @@ import {
   ButtonStyle,
   EmbedBuilder,
   StringSelectMenuBuilder,
-  PermissionsBitField,
 } from "discord.js";
 import { loadSell, saveSell } from "./sellStorage.js";
 
 export function registerSellFeature(client, deps) {
-  // deps injected from index.js to avoid circular imports
+  // --- dependencies injected to avoid circular imports ---
   const {
     t,
-    ensureAllowedChannel,
+    ensureAllowedChannel: allowChannel, // alias to avoid naming clashes
     isModerator,
     getItemInfo,
     searchItemsByName,
   } = deps;
 
-  // per-guild counters for SELL ids
-  const counters = {};
-  function nextId(guildId) { counters[guildId] = (counters[guildId] || 0) + 1; return counters[guildId]; }
+  // Guard for easier debugging
+  if (typeof allowChannel !== "function") {
+    console.error("[sellFeature] ensureAllowedChannel missing in deps");
+  }
 
-  // initialize counters on ready
-  client.once("ready", () => {
+  // ---------- safe reply helper (prevents 'Unknown interaction') ----------
+  async function safeReply(interaction, options) {
+    try {
+      if (interaction.deferred || interaction.replied) {
+        return await interaction.followUp(options);
+      }
+      return await interaction.reply(options);
+    } catch {
+      try { return await interaction.followUp(options); } catch {}
+    }
+  }
+
+  // ---------- per-guild counters ----------
+  const counters = {};
+  function nextId(guildId) {
+    counters[guildId] = (counters[guildId] || 0) + 1;
+    return counters[guildId];
+  }
+
+  // init counters on both events (v14: 'ready', v15: 'clientReady')
+  const initCounters = () => {
     for (const [guildId] of client.guilds.cache) {
       const items = loadSell(guildId);
       counters[guildId] = items.reduce((m, o) => Math.max(m, o.id || 0), 0);
     }
-  });
+  };
+  client.once("ready", initCounters);
+  client.once("clientReady", initCounters);
 
-  /* ---------- helpers ---------- */
+  // simple pending stash for select menus on create
+  const __sellPending = new Map();
+
+  // ---------- helpers ----------
   function qtyText(entry, guildId) {
     if (entry.quantityMode === "infinite") return t(guildId, "quantity.infinite");
     const key = entry.quantityMode === "stacks" ? "quantity.stacks" : "quantity.items";
@@ -61,9 +86,11 @@ export function registerSellFeature(client, deps) {
     return (v && v !== key) ? v : fallback;
   }
 
+  // ---------- UI builders ----------
   function buildSellEmbed(entry, itemInfo, priceInfo, guildId) {
     const titlePrefix = t(guildId, "sell.embed.titlePrefix") || "Verkauf";
-    const desc = t(guildId, "sell.embed.entry", { id: entry.id }) + (entry.closed ? t(guildId, "sell.embed.closedSuffix") : "");
+    const desc = (t(guildId, "sell.embed.entry", { id: entry.id }) || `Eintrag #${entry.id}`)
+               + (entry.closed ? (t(guildId, "sell.embed.closedSuffix") || " — geschlossen") : "");
     const scopeText = safeT(guildId, `wizard.scope.${entry.scope}`, entry.scope);
     const modeText  = safeT(guildId, `wizard.mode.${entry.mode}`,   entry.mode);
 
@@ -72,12 +99,13 @@ export function registerSellFeature(client, deps) {
       .setTitle(`${titlePrefix} ${entry.title}`)
       .setDescription(`**${desc}**`)
       .addFields(
-        { name: t(guildId, "sell.fields.seller")      || "Verkäufer", value: entry.seller, inline: true },
-        { name: t(guildId, "sell.fields.requestType") || "Angebotstyp", value: scopeText, inline: true },
-        { name: t(guildId, "sell.fields.mode")        || "Modus", value: modeText, inline: true },
+        { name: t(guildId, "sell.fields.seller")      || "Verkäufer",    value: entry.seller, inline: true },
+        { name: t(guildId, "sell.fields.requestType") || "Angebotstyp",  value: scopeText,    inline: true },
+        { name: t(guildId, "sell.fields.mode")        || "Modus",        value: modeText,     inline: true },
 
-        { name: t(guildId, "sell.fields.item")        || "Angebotener Gegenstand",
-          value: `${itemInfo?.name ?? `Item #${entry.wowItemId}`} (ID: ${entry.wowItemId})`, inline: false },
+        { name: t(guildId, "sell.fields.item")        || "Gegenstand",
+          value: `${itemInfo?.name ?? `Item #${entry.wowItemId}`} (ID: ${entry.wowItemId})`,
+          inline: false },
 
         { name: t(guildId, "sell.fields.quantity")    || "Menge", value: qtyText(entry, guildId), inline: true },
         { name: t(guildId, "sell.fields.price")       || "Preis",
@@ -85,36 +113,52 @@ export function registerSellFeature(client, deps) {
           inline: true },
 
         { name: t(guildId, "sell.fields.buyers")      || "Reserviert von",
-          value: entry.takenBy.length ? entry.takenBy.map(u => `<@${u}>`).join(", ") : "—", inline: false },
+          value: (Array.isArray(entry.takenBy) && entry.takenBy.length ? entry.takenBy.map(u => `<@${u}>`).join(", ") : "—"),
+          inline: false },
       )
       .setFooter({ text: `Created by ${entry.ownerTag}` })
       .setTimestamp();
 
-    if (itemInfo?.iconUrl) {
-      embed.setThumbnail(itemInfo.iconUrl);
-    }
+    if (itemInfo?.iconUrl) embed.setThumbnail(itemInfo.iconUrl);
     embed.setURL(`https://classic.wowhead.com/item=${entry.wowItemId}`);
     return embed;
   }
 
   function buildSellButtons(entry, viewerMember, guildId) {
     const viewerId = viewerMember?.user?.id ?? viewerMember?.id ?? null;
-
     const isManager =
       (viewerId && entry.ownerId === viewerId) ||
       isModerator(viewerMember, guildId);
 
-    const alreadyByViewer = viewerId ? entry.takenBy.includes(viewerId) : false;
-
-    const canBuy =
-      !entry.closed &&
-      !alreadyByViewer &&
-      (entry.mode === "multi" || entry.takenBy.length === 0);
-
-    const canUnbuy =
-      !entry.closed && alreadyByViewer;
+    const taken = Array.isArray(entry.takenBy) ? entry.takenBy : [];
+    const alreadyByViewer = viewerId ? taken.includes(viewerId) : false;
 
     const row = new ActionRowBuilder();
+
+    // Closed: only Open (owner) + Remove (owner/mod)
+    if (entry.closed) {
+      if (viewerId && viewerId === entry.ownerId) {
+        row.addComponents(
+          new ButtonBuilder()
+            .setCustomId(`sell_open:${entry.id}`)
+            .setStyle(ButtonStyle.Primary)
+            .setLabel(t(guildId, "sell.buttons.open") || "Öffnen")
+        );
+      }
+      if (isManager) {
+        row.addComponents(
+          new ButtonBuilder()
+            .setCustomId(`sell_remove:${entry.id}`)
+            .setStyle(ButtonStyle.Danger)
+            .setLabel(t(guildId, "sell.buttons.remove") || "Löschen")
+        );
+      }
+      return row.components.length ? [row] : [];
+    }
+
+    // Open: Buy/Unbuy + Close/Remove/Change (manager)
+    const canBuy   = !alreadyByViewer && (entry.mode === "multi" || taken.length === 0);
+    const canUnbuy = alreadyByViewer;
 
     if (canBuy) {
       row.addComponents(
@@ -155,10 +199,12 @@ export function registerSellFeature(client, deps) {
   async function postOrUpdateSell(interactionLike, entry) {
     const guildId   = interactionLike.guildId;
     const itemInfo  = await getItemInfo(entry.wowItemId);
-    const priceInfo = entry.priceType === "item" && entry.priceItemId ? await getItemInfo(entry.priceItemId) : null;
+    const priceInfo = (entry.priceType === "item" && entry.priceItemId)
+      ? await getItemInfo(entry.priceItemId)
+      : null;
 
-    const embed = buildSellEmbed(entry, itemInfo, priceInfo, guildId);
-    const viewer = interactionLike.member || interactionLike.user || interactionLike;
+    const embed      = buildSellEmbed(entry, itemInfo, priceInfo, guildId);
+    const viewer     = interactionLike.member || interactionLike.user || interactionLike;
     const components = buildSellButtons(entry, viewer, guildId);
 
     if (!entry.messageId || !entry.channelId) {
@@ -174,15 +220,16 @@ export function registerSellFeature(client, deps) {
     }
   }
 
-  /* ---------- interactionCreate hook ---------- */
+  // ---------- interactionCreate ----------
   client.on("interactionCreate", async (interaction) => {
     if (!(interaction.isChatInputCommand() || interaction.isButton() || interaction.isStringSelectMenu())) return;
 
-    // Slash commands
+    // ----- Slash commands -----
     if (interaction.isChatInputCommand()) {
       const guildId = interaction.guildId;
+
       if (interaction.commandName === "sell-create") {
-        if (!ensureAllowedChannel(interaction)) return;
+        if (!allowChannel(interaction)) return;
         await interaction.deferReply({ ephemeral: true });
 
         // Inputs
@@ -216,9 +263,9 @@ export function registerSellFeature(client, deps) {
         } else {
           const candidates = await searchItemsByName(wowItemInput);
           if (!candidates.length) return interaction.editReply(t(guildId, "msg.noneFound", { q: wowItemInput }));
-          if (candidates.length === 1) finalItemId = candidates[0].id;
-          else {
-            // Quick select menu (same UX wie bei /create-bb)
+          if (candidates.length === 1) {
+            finalItemId = candidates[0].id;
+          } else {
             const key = interaction.id;
             const options = candidates.slice(0,25).map(c => ({
               label: c.name.slice(0, 100),
@@ -228,8 +275,12 @@ export function registerSellFeature(client, deps) {
               .setCustomId(`sell_pick_item:${key}`)
               .setPlaceholder(t(guildId, "sell.msg.multipleFound", { q: wowItemInput }) || "Mehrere gefunden")
               .addOptions(options).setMinValues(1).setMaxValues(1);
-            await interaction.editReply({ content: t(guildId, "sell.msg.multipleFound", { q: wowItemInput }), components: [new ActionRowBuilder().addComponents(sel)] });
-            // stash the draft for later confirm
+
+            await interaction.editReply({
+              content: t(guildId, "sell.msg.multipleFound", { q: wowItemInput }),
+              components: [new ActionRowBuilder().addComponents(sel)],
+            });
+
             const draft = {
               id: null,
               title,
@@ -264,17 +315,23 @@ export function registerSellFeature(client, deps) {
           } else if (priceItemInput) {
             const cand = await searchItemsByName(priceItemInput);
             if (!cand.length) return interaction.editReply(t(guildId, "msg.noneFound", { q: priceItemInput }));
-            if (cand.length === 1) priceItemId = cand[0].id;
-            else {
+            if (cand.length === 1) {
+              priceItemId = cand[0].id;
+            } else {
               const key = `${interaction.id}:price`;
               const options = cand.slice(0,25).map(c => ({
                 label: c.name.slice(0,100), description: `ID ${c.id}`, value: String(c.id)
               }));
               const sel = new StringSelectMenuBuilder()
                 .setCustomId(`sell_pick_price:${key}`)
-                .setPlaceholder(t(guildId, "sell.msg.multiplePriceFound", { q: priceItemInput }) || "Mehrere Belohnungen gefunden")
+                .setPlaceholder(t(guildId, "sell.msg.multiplePriceFound", { q: priceItemInput }) || "Mehrere Preis-Gegenstände gefunden")
                 .addOptions(options).setMinValues(1).setMaxValues(1);
-              await interaction.editReply({ content: t(guildId, "sell.msg.multiplePriceFound", { q: priceItemInput }), components: [new ActionRowBuilder().addComponents(sel)] });
+
+              await interaction.editReply({
+                content: t(guildId, "sell.msg.multiplePriceFound", { q: priceItemInput }),
+                components: [new ActionRowBuilder().addComponents(sel)],
+              });
+
               const draft = {
                 id: null,
                 title,
@@ -336,21 +393,19 @@ export function registerSellFeature(client, deps) {
       }
 
       if (interaction.commandName === "sell-list") {
-        const guildId = interaction.guildId;
         const list = loadSell(guildId);
-        if (!list.length) return interaction.reply({ content: "📭", ephemeral: true });
+        if (!list.length) return safeReply(interaction, { content: "📭", ephemeral: true });
         const lines = list.map(e => `#${e.id} — **${e.title}** (${e.quantity ?? "∞"} × ${e.wowItemId}) [${e.mode}]${e.closed ? " — closed" : ""}`);
-        return interaction.reply({ content: lines.join("\n"), ephemeral: true });
+        return safeReply(interaction, { content: lines.join("\n"), ephemeral: true });
       }
 
       if (interaction.commandName === "sell-remove") {
-        const guildId = interaction.guildId;
         const id = interaction.options.getInteger("id", true);
         let list = loadSell(guildId);
         const entry = list.find(x => x.id === id);
-        if (!entry) return interaction.reply({ content: t(guildId, "sell.msg.notFound") || "Nicht gefunden.", ephemeral: true });
+        if (!entry) return safeReply(interaction, { content: t(guildId, "sell.msg.notFound") || "Nicht gefunden.", ephemeral: true });
         if (!(entry.ownerId === interaction.user.id || isModerator(interaction.member, guildId))) {
-          return interaction.reply({ content: "❌ Keine Berechtigung.", ephemeral: true });
+          return safeReply(interaction, { content: "❌ Keine Berechtigung.", ephemeral: true });
         }
         if (entry.channelId && entry.messageId) {
           const ch = await client.channels.fetch(entry.channelId).catch(()=>null);
@@ -359,17 +414,20 @@ export function registerSellFeature(client, deps) {
         }
         list = list.filter(x => x.id !== id);
         saveSell(guildId, list);
-        return interaction.reply({ content: t(guildId, "sell.msg.removed", { id }) || `Entfernt: #${id}`, ephemeral: true });
+        return safeReply(interaction, { content: t(guildId, "sell.msg.removed", { id }) || `Entfernt: #${id}`, ephemeral: true });
       }
       return;
     }
 
-    // Select menus (for picking items during create)
+    // ----- Select menus (for picking items during create) -----
     if (interaction.isStringSelectMenu()) {
       const [tag, what, key] = (interaction.customId || "").split(":");
       if (tag === "sell_pick_item" || tag === "sell_pick_price") {
+        await interaction.deferUpdate().catch(()=>{});
+
         const st = __sellPending.get(key);
-        if (!st) return interaction.reply({ content: "⏱️ Auswahl abgelaufen.", ephemeral: true });
+        if (!st) return interaction.editReply({ content: "⏱️ Auswahl abgelaufen.", components: [] });
+
         const id = parseInt(interaction.values?.[0], 10);
         if (tag === "sell_pick_item") st.draft.wowItemId = id;
         else st.draft.priceItemId = id;
@@ -387,18 +445,18 @@ export function registerSellFeature(client, deps) {
           saveSell(guildId, list);
           __sellPending.delete(key);
 
-          await interaction.update({ content: t(guildId, "sell.msg.created", { id: st.draft.id, title: st.draft.title }) || `Verkauf #${st.draft.id} erstellt.`, components: [] });
+          await interaction.editReply({ content: t(guildId, "sell.msg.created", { id: st.draft.id, title: st.draft.title }) || `Verkauf #${st.draft.id} erstellt.`, components: [] });
           await postOrUpdateSell(interaction, st.draft);
           return;
         }
 
-        // otherwise just acknowledge
-        return interaction.update({ components: [] });
+        // otherwise just acknowledge (remove menu)
+        return interaction.editReply({ components: [] });
       }
       return;
     }
 
-    // Buttons
+    // ----- Buttons -----
     if (interaction.isButton()) {
       const [act, idStr] = (interaction.customId || "").split(":");
       if (!act.startsWith("sell_")) return;
@@ -406,20 +464,27 @@ export function registerSellFeature(client, deps) {
       const guildId = interaction.guildId;
       let list = loadSell(guildId);
       const entry = list.find(x => x.id === Number(idStr));
-      if (!entry) return interaction.reply({ content: t(guildId, "sell.msg.notFound") || "Nicht gefunden.", ephemeral: true });
+      if (!entry) return safeReply(interaction, { content: t(guildId, "sell.msg.notFound") || "Nicht gefunden.", ephemeral: true });
+
+      // normalize takenBy for safety
+      entry.takenBy = Array.isArray(entry.takenBy) ? entry.takenBy : [];
 
       try {
         if (act === "sell_buy") {
-          if (entry.closed) return interaction.reply({ content: t(guildId, "sell.msg.closed") || "Geschlossen.", ephemeral: true });
-          if (entry.mode === "single" && entry.takenBy.length > 0 && !entry.takenBy.includes(interaction.user.id)) {
-            return interaction.reply({ content: "❌ Bereits reserviert.", ephemeral: true });
+          if (entry.closed) return safeReply(interaction, { content: t(guildId, "sell.msg.closed") || "Geschlossen.", ephemeral: true });
+
+          const taken = entry.takenBy;
+          if (entry.mode === "single" && taken.length > 0 && !taken.includes(interaction.user.id)) {
+            return safeReply(interaction, { content: "❌ Bereits reserviert.", ephemeral: true });
           }
-          if (!entry.takenBy.includes(interaction.user.id)) entry.takenBy.push(interaction.user.id);
+
+          if (!taken.includes(interaction.user.id)) taken.push(interaction.user.id);
           saveSell(guildId, list);
 
+          await interaction.deferUpdate().catch(()=>{});
           const itemInfo  = await getItemInfo(entry.wowItemId);
           const priceInfo = entry.priceType === "item" && entry.priceItemId ? await getItemInfo(entry.priceItemId) : null;
-          await interaction.update({
+          await interaction.editReply({
             embeds: [buildSellEmbed(entry, itemInfo, priceInfo, guildId)],
             components: buildSellButtons(entry, interaction.member, guildId),
           });
@@ -430,9 +495,10 @@ export function registerSellFeature(client, deps) {
           entry.takenBy = entry.takenBy.filter(u => u !== interaction.user.id);
           saveSell(guildId, list);
 
+          await interaction.deferUpdate().catch(()=>{});
           const itemInfo  = await getItemInfo(entry.wowItemId);
           const priceInfo = entry.priceType === "item" && entry.priceItemId ? await getItemInfo(entry.priceItemId) : null;
-          await interaction.update({
+          await interaction.editReply({
             embeds: [buildSellEmbed(entry, itemInfo, priceInfo, guildId)],
             components: buildSellButtons(entry, interaction.member, guildId),
           });
@@ -441,13 +507,32 @@ export function registerSellFeature(client, deps) {
 
         if (act === "sell_close") {
           const canManage = entry.ownerId === interaction.user.id || isModerator(interaction.member, guildId);
-          if (!canManage) return interaction.reply({ content: "❌ Keine Berechtigung.", ephemeral: true });
+          if (!canManage) return safeReply(interaction, { content: "❌ Keine Berechtigung.", ephemeral: true });
+
           entry.closed = true;
           saveSell(guildId, list);
 
+          await interaction.deferUpdate().catch(()=>{});
           const itemInfo  = await getItemInfo(entry.wowItemId);
           const priceInfo = entry.priceType === "item" && entry.priceItemId ? await getItemInfo(entry.priceItemId) : null;
-          await interaction.update({
+          await interaction.editReply({
+            embeds: [buildSellEmbed(entry, itemInfo, priceInfo, guildId)],
+            components: buildSellButtons(entry, interaction.member, guildId),
+          });
+          return;
+        }
+
+        if (act === "sell_open") {
+          if (entry.ownerId !== interaction.user.id) {
+            return safeReply(interaction, { content: "❌ Nur der Verkäufer darf wieder öffnen.", ephemeral: true });
+          }
+          entry.closed = false;
+          saveSell(guildId, list);
+
+          await interaction.deferUpdate().catch(()=>{});
+          const itemInfo  = await getItemInfo(entry.wowItemId);
+          const priceInfo = entry.priceType === "item" && entry.priceItemId ? await getItemInfo(entry.priceItemId) : null;
+          await interaction.editReply({
             embeds: [buildSellEmbed(entry, itemInfo, priceInfo, guildId)],
             components: buildSellButtons(entry, interaction.member, guildId),
           });
@@ -456,7 +541,9 @@ export function registerSellFeature(client, deps) {
 
         if (act === "sell_remove") {
           const canManage = entry.ownerId === interaction.user.id || isModerator(interaction.member, guildId);
-          if (!canManage) return interaction.reply({ content: "❌ Keine Berechtigung.", ephemeral: true });
+          if (!canManage) return safeReply(interaction, { content: "❌ Keine Berechtigung.", ephemeral: true });
+
+          await interaction.deferUpdate().catch(()=>{});
           await interaction.message.delete().catch(()=>{});
           list = list.filter(x => x.id !== entry.id);
           saveSell(guildId, list);
@@ -464,18 +551,43 @@ export function registerSellFeature(client, deps) {
         }
 
         if (act === "sell_change") {
-          if (entry.closed) return interaction.reply({ content: t(guildId, "sell.msg.closedNoChange") || "Geschlossen – nicht änderbar.", ephemeral: true });
-          return interaction.reply({ content: t(guildId, "sell.msg.useChangeCmd") || "✏️ Nutze `/sell-change` zum Bearbeiten.", ephemeral: true });
+          if (entry.closed) return safeReply(interaction, { content: t(guildId, "sell.msg.closedNoChange") || "Geschlossen – nicht änderbar.", ephemeral: true });
+          return safeReply(interaction, { content: t(guildId, "sell.msg.useChangeCmd") || "✏️ Nutze `/sell-change` zum Bearbeiten.", ephemeral: true });
         }
       } catch (e) {
         console.error("Sell button error:", e);
         if (!interaction.replied && !interaction.deferred) {
-          await interaction.reply({ content: "⚠️ Internal error.", ephemeral: true });
+          await safeReply(interaction, { content: "⚠️ Internal error.", ephemeral: true });
         }
       }
     }
   });
-
-  // simple pending stash for select menus on create
-  const __sellPending = new Map();
 }
+
+/*
+Expected i18n keys used here (add to your locales):
+- sell.embed.titlePrefix
+- sell.embed.entry
+- sell.embed.closedSuffix
+- sell.fields.seller
+- sell.fields.requestType
+- sell.fields.mode
+- sell.fields.item
+- sell.fields.quantity
+- sell.fields.price
+- sell.fields.buyers
+- sell.buttons.open
+- sell.buttons.remove
+- sell.buttons.buy
+- sell.buttons.unbuy
+- sell.buttons.close
+- sell.buttons.change
+- sell.msg.multipleFound
+- sell.msg.multiplePriceFound
+- sell.msg.priceItemMissing
+- sell.msg.created
+- sell.msg.notFound
+- sell.msg.closed
+- sell.msg.closedNoChange
+- sell.msg.useChangeCmd
+*/

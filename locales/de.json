@@ -1,12 +1,20 @@
 {
+  "title":{
+    "prefix":{
+      "buy":"ANKAUF: ",
+      "sell":"VERKAUF: "
+    }
+  },
   "buttons": {
-    "claim": "Claimen",
-    "unclaim": "Unclaim",
-    "close": "Schließen",
-    "remove": "Löschen",
-    "change": "Ändern",
+    "claim": "Auftrag annehmen",
+    "unclaim": "Auftrag aufgeben",
+    "close": "Auftrag Schließen",
+    "remove": "Auftrag Löschen",
+    "change": "Auftrag Ändern",
     "ok": "OK",
-    "cancel": "Abbrechen"
+    "cancel": "Abbrechen",
+    "open":"Auftrag Öffnen",
+    "actions":"Aktionen"
   },
   "fields": {
     "requester": "Antragsteller",
@@ -16,10 +24,10 @@
     "quantity": "Menge",
     "reward": "Belohnung",
     "claimedBy": "Übernommen von",
-    "fields.itemTooltipTitle" : "Item",
-    "tooltip.itemLevel" : "Itemlevel",
-    "tooltip.maxStack" : "Maxmium pro Stack",
-    "itemTooltipTitle":"Tooltip"
+    "itemTooltipTitle": "Item",
+    "tooltipTitle": "Tooltip",
+    "tooltip.itemLevel": "Itemlevel",
+    "tooltip.maxStack": "Maximum pro Stack"
   },
   "embed": {
     "titlePrefix": "📋",
@@ -44,19 +52,18 @@
     "orderClosed": "Dieser Auftrag ist geschlossen.",
     "orderClosedNoChange": "Dieser Auftrag ist geschlossen und kann nicht geändert werden.",
     "orderNotFound": "Auftrag nicht gefunden.",
-    "noRewardItem": "Belohnungstyp ist 'Item', aber es wurde keine reward_item_id angegeben.",
-    "invalidQuantity": "Bitte gib eine gültige 'quantity' für Items/Stacks an (>= 1).",
+    "noRewardItem": "Belohnungstyp ist „Item“, aber es wurde keine reward_item_id angegeben.",
+    "invalidQuantity": "Bitte gib eine gültige Menge (>= 1) an.",
     "tookOrder": "Du hast Auftrag #{id} übernommen: **{title}**",
     "multipleFound": "Mehrere Items gefunden für **{q}** — bitte wähle eines und drücke **OK**.",
     "noneFound": "Keine Items gefunden für **{q}**. Bitte spezifischer oder eine ID angeben.",
     "selectionExpired": "Auswahl abgelaufen. Bitte den Wizard erneut ausführen.",
     "selectFirst": "Bitte zuerst ein Item auswählen.",
     "notAllowedChannel": "Dieser Befehl ist in diesem Channel nicht erlaubt.",
-    "scopeGuildOnlyMods": "Nur Moderatoren dürfen den Anfragetyp „Guild“ verwenden.",
+    "scopeGuildOnlyMods": "Nur Moderatoren dürfen den Anfragetyp „Gilde“ verwenden.",
     "requesterOnlySelf": "Nur Moderatoren dürfen einen anderen Antragsteller setzen.",
-    "rewardItemMissing": "Belohnungstyp ist 'Item'. Bitte gib ein Belohnungs-Item (Name oder ID) oder reward_item_id an.",
+    "rewardItemMissing": "Belohnungstyp ist „Item“. Bitte gib ein Belohnungs-Item (Name oder ID) oder reward_item_id an.",
     "multipleRewardFound": "Mehrere Belohnungs-Items gefunden für **{q}** — bitte wähle eines und drücke **OK**."
-  
   },
   "setup": {
     "title": "Blackboard Setup",
@@ -72,121 +79,129 @@
     "configNone": "_keine_"
   },
   "wizard": {
-    "checkDm": "📩 Ich habe dir einen DM mit dem Assistenten geschickt.",
+    "checkDm": "📩 Ich habe dir eine DM mit dem Assistenten geschickt.",
     "startTitle": "Blackboard-Assistent",
-    "chooseAction": "Was willst du tun?",
+    "chooseAction": "Was möchtest du erstellen?",
     "create": "Neuen Eintrag erstellen",
     "change": "Bestehenden ändern",
     "cancel": "Abbrechen",
-    "mode":{
-      "single":"Nur ein User",
-      "multi":"Mehrere User"
-    },
-    "scope":{
-      "personal":"Persönlich",
-      "guild":"Gilde"
-    },
     "cancelled": "Assistent abgebrochen.",
-    "ask": {
-      "title": "Gib einen Titel ein",
-      "item": "Gib das Item ein (Name oder ID)",
-      "quantityMode": "Wähle den Mengentyp",
-      "quantity": "Gib die Menge ein (>=1)",
-      "mode": "Wähle den Modus",
-      "scope": "Wähle den Anfragetyp",
-      "rewardType": "Wähle den Belohnungstyp",
-      "rewardItem": "Gib das Belohnungs-Item ein (Name oder ID)",
-      "rewardQty": "Gib die Belohnungsmenge ein",
-      "rewardPer": "Belohnung gilt pro…"
+    "noPending": "Der Assistent wartet gerade nicht auf eine Eingabe.",
+    "saved": "✅ Gespeichert.",
+    "select":{
+      "placeholder":"Items/Stapel/Unbegrenzt"
     },
-    "label":{
-      "single" : "Einzelauftrag",
-      "multi" : "Mehrfachauftrag",
-      "items" : "Items",
-      "stacks" : "Stapel",
-      "infinite" : "Unendlich",
-      "personal" : "Persönliche Anfrage",
-      "guild" : "Gildenanfrage",
-      "gold" : "Gold",
-      "item" : "Item",
-      "per_item" : "Pro Item",
-      "confirmSave" : "Bestätigen",
-      "cancel" : "Abbrechen",
-      "per_stack" : "Pro Stack"
+    "success":{
+      "title":"Erstellt",
+      "desc":"Der Auftrag wurde erfolgreich erstellt"
+    },
+    "card": {
+      "current": "Aktuelles Feld",
+      "soFar": "Aktuelle Einstellungen",
+      "answer":"Antwort"
+    },
+    "nav": {
+      "back": "Zurück",
+      "reset": "Zurücksetzen",
+      "next": "Weiter"
+    },
+    "mode": {
+      "single": "Nur ein User",
+      "multi": "Mehrere User"
+    },
+    "scope": {
+      "personal": "Persönlich",
+      "guild": "Gilde"
+    },
+    "ask": {
+      "title": "Titel eingeben",
+      "item": "Item angeben (Name oder ID)[ganze Namen verwenden! 'Seide' findet keine 'Glutseide']",
+      "quantityMode": "Mengentyp wählen",
+      "quantity": "Menge des Items eingeben (≥ 1)",
+      "mode": "Modus wählen",
+      "scope": "Anfragetyp wählen",
+      "rewardType": "Belohnungstyp wählen",
+      "rewardItem": "Belohnungs-Item eingeben (Name oder ID)",
+      "rewardQty": "Belohnungsmenge eingeben (≥ 0)",
+      "rewardPer": "Belohnung gilt pro …"
+    },
+    "hint": {
+      "typeAnswer": "Bitte antworte mit deinem Text.",
+      "item": "Beispiel: Nudelsuppe",
+      "number": "Beispiel: 20",
+      "number0": "Beispiel: 20"
+    },
+    "label": {
+      "single": "Einzelauftrag",
+      "multi": "Mehrfachauftrag",
+      "items": "Items",
+      "stacks": "Stapel",
+      "infinite": "Unendlich",
+      "personal": "Persönlich",
+      "guild": "Gilde",
+      "gold": "Gold",
+      "item": "Item",
+      "per_item": "Pro Item",
+      "per_stack": "Pro Stack",
+      "confirmSave": "Speichern",
+      "cancel": "Abbrechen"
     },
     "multipleFound": "Mehrere Items gefunden für **{q}** — bitte wähle eines und drücke **OK**.",
     "summaryTitle": "Zusammenfassung",
-    "confirmCreate": "Erstellen",
-    "confirmSave": "Speichern",
-    "back": "Zurück",
-    "enterNumber": "Zahl eingeben (0 = speichern)",
-    "fieldPickerTitle": "Welches Feld soll geändert werden?",
-    "changed": "Aktualisiert.",
-    "saved": "✅ Gespeichert.",
-    "hint":{
-      "typeAnswer" : "Order for Food",
-      "item" : "Noodle Soup",
-      "number" : "20",
-      "number0" : "20"
+    "summary": {
+      "title": "Titel",
+      "item": "Item",
+      "qty": "Menge",
+      "mode": "Modus",
+      "scope": "Anfragetyp",
+      "reward": "Belohnung"
+    },
+    "confirmQuestion": "Diesen Eintrag speichern?"
   },
-  "started":"Wizard Started",
-  "titleSaved":"Title Saved",
-  "typeconfirm":"Type confirm to save, or cancel to abort."
+  "tooltip": {
+    "itemLevel": "Itemlevel {n}",
+    "maxStack": "Maximum pro Stack: {n}",
+    "requiresLevel":"Benötigt Level {n}"
   },
-  "summary":{
-    "title" : "Title",
-    "item" : "Item",
-    "qty" : "Quantity",
-    "mode" : "Mode",
-    "scope" : "Scope",
-    "reward" : "Reward"
-},
-"confirmQuestion":"Wizard Started",
-"summaryTitle":"Wizard Started",
-"tooltip":{
-  "itemLevel":"Item Level"
-},
   "sell": {
     "embed": {
       "titlePrefix": "Verkauf",
-      "entry": "Verkauf #${id}",
+      "entry": "Verkauf #{id}",
       "closedSuffix": " — geschlossen"
     },
     "fields": {
       "seller": "Verkäufer",
       "requestType": "Angebotstyp",
       "mode": "Modus",
-      "item": "Angebotener Gegenstand",
+      "sellItem": "Gegenstand zum Verkauf",
       "quantity": "Menge",
       "price": "Preis",
       "buyers": "Reserviert von"
     },
     "buttons": {
+      "open": "Öffnen",
+      "remove": "Löschen",
       "buy": "Kaufen",
       "unbuy": "Stornieren",
       "close": "Schließen",
-      "remove": "Löschen",
       "change": "Ändern"
     },
     "msg": {
-      "created": "✅ Verkauf #${id} — **${title}** erstellt.",
-      "multipleFound": "Mehrere Items für „${q}” gefunden, bitte auswählen.",
-      "multiplePriceFound": "Mehrere Preis-Items für „${q}” gefunden, bitte auswählen.",
+      "created": "✅ Verkauf #{id} — **{title}** erstellt.",
+      "multipleFound": "Mehrere Items für „{q}” gefunden, bitte auswählen.",
+      "multiplePriceFound": "Mehrere Preis-Items für „{q}” gefunden, bitte auswählen.",
       "priceItemMissing": "Bitte ein Preis-Item angeben oder per ID auswählen.",
       "notFound": "Nicht gefunden.",
-      "removed": "🗑️ Verkauf #${id} entfernt.",
+      "removed": "🗑️ Verkauf #{id} entfernt.",
       "closed": "Dieser Verkauf ist geschlossen.",
       "closedNoChange": "Dieser Verkauf ist geschlossen und kann nicht geändert werden.",
       "useChangeCmd": "Nutze `/sell-change` zum Bearbeiten."
     },
     "price": {
-      "goldPerItem":  "${n} Gold (pro Item)",
-      "goldPerStack": "${n} Gold (pro Stapel)",
-      "itemPerItem":  "${n}× Item (ID ${id}) pro Item",
-      "itemPerStack": "${n}× Item (ID ${id}) pro Stapel"
+      "goldPerItem": "{n} Gold (pro Item)",
+      "goldPerStack": "{n} Gold (pro Stapel)",
+      "itemPerItem": "{n}× Item (ID {id}) pro Item",
+      "itemPerStack": "{n}× Item (ID {id}) pro Stapel"
     }
   }
-
-
-
 }

@@ -5,6 +5,7 @@
 import { REST, Routes } from "discord.js";
 import { config } from "dotenv";
 import { sellCommands } from "./sellCommands.js";
+//import { buyCommands } from "./buyCommands.js";
 config();
 
 const clientId = process.env.DISCORD_CLIENT_ID || process.env.CLIENT_ID;
@@ -15,9 +16,10 @@ if (!token)   throw new Error("DISCORD_TOKEN is missing in .env");
 if (!clientId) throw new Error("DISCORD_CLIENT_ID (or CLIENT_ID) is missing in .env");
 if (!guildId)  throw new Error("DISCORD_GUILD_ID (or GUILD_ID) is missing in .env");
 
-const commands = [
+export const commands = [
   
-  // ----- create-bb -----
+  // ----- create-bb -----/*
+  /*
   {
     name: "create-bb",
     description: "Create a new blackboard order",
@@ -53,7 +55,7 @@ const commands = [
       { name: "reward_item", description: "Reward item (name or ID)", type: 3, required: false },
     ]
   },
-
+  */
   // ----- remove-bb -----
   {
     name: "remove-bb",
@@ -98,7 +100,7 @@ const commands = [
     },  
 
   // ----- take-bb -----
-  {
+  /*{
     name: "take-bb",
     description: "Take an existing order to fulfill",
     options: [
@@ -110,7 +112,7 @@ const commands = [
   {
     name: "list-bb",
     description: "List all open orders for this guild"
-  },
+  },*/
   // ----- bb-setup -----
   {
     name: "bb-setup",
@@ -131,12 +133,21 @@ const commands = [
     description: "Open a DM wizard to create or change a blackboard order",
     description_localizations: { de: "DM-Assistent zum Erstellen oder Ändern eines Auftrags" }
   },
-  ...sellCommands
+  //...sellCommands,
+  //...buyCommands
 ];
 
 
 
 const rest = new REST({ version: "10" }).setToken(token);
+
+export async function upsertGuildCommands(appId, guildId, commands) {
+  await rest.put(
+    Routes.applicationGuildCommands(appId, guildId),
+    { body: commands }
+  );
+  return true;
+}
 
 (async () => {
   console.log("🔄 Registering slash commands to guild:", guildId);

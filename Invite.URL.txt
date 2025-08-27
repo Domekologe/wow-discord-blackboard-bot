@@ -1,0 +1,6 @@
+https://discord.com/oauth2/authorize?client_id=1407367045640618096&permissions=19327446016&integration_type=0&scope=bot+applications.commands
+
+
+dev:
+1409929796799954996
+https://discord.com/oauth2/authorize?client_id=1409929796799954996&permissions=19327446016&integration_type=0&scope=bot+applications.commands
