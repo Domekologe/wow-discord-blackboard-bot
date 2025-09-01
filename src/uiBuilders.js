@@ -51,6 +51,11 @@ const requesterLabel = (order, g) =>
     ? (t(g, "fields.seller") || "Verkäufer")
     : (t(g, "fields.requester") || "Antragsteller");
 
+const claimedLabel = (order, g) =>
+  order.type === "sell"
+    ? (t(g, "fields.buyers") || "Reserviert von")
+    : (t(g, "fields.claimedBy") || "Übernommen von");
+
 
 /* ---- Tooltip-Model Builder ---- */
 function buildTooltipLinesFor(itemInfo, guildId) {
@@ -130,13 +135,13 @@ export async function buildEmbed(order, itemInfo, rewardInfo, guildId) {
         value: rewardToText(order, guildId) + (rewardInfo ? `\n• ${rewardInfo.name} (ID: ${order.rewardItemId})` : ""),
         inline: true
       },
-      { name: t(guildId, "fields.claimedBy") || "Claimed by", value: order.takenBy.length ? order.takenBy.map(u => `<@${u}>`).join(", ") : "—", inline: false },
+      { name: claimedLabel(order, guildId), value: order.takenBy.length ? order.takenBy.map(u => `<@${u}>`).join(", ") : "—", inline: false },
     )
     .setFooter({ text: `Created by ${order.ownerTag}` })
     .setTimestamp();
 
   if (itemInfo?.iconUrl) embed.setThumbnail(itemInfo.iconUrl);
-  embed.setURL(`https://classic.wowhead.com/item=${order.wowItemId}`);
+  embed.setURL(`https://www.wowhead.com/mop-classic/de/item=${order.wowItemId}`);
 
   // Itemkarte
   try {

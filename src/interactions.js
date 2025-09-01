@@ -210,7 +210,7 @@ export function registerInteractionHandler(client) {
           setStr("reward_type", "rewardType");
           setStr("reward_per", "rewardPer");
           setInt("quantity", "quantity");
-          setInt("reward_qty", "rewardQuantity");
+          setInt("reward_quantity", "rewardQuantity");
           setInt("reward_item_id", "rewardItemId");
           setInt("wow_item_id", "wowItemId");
 

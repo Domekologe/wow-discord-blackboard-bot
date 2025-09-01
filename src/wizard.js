@@ -266,16 +266,16 @@ const rewardInfo = order.rewardType === "item" && order.rewardItemId
   : null;
 
 const itemFieldName   = order.type === "sell"
-  ? (tt(g, "sell", "fields.sellItem") || "Gegenstand zum Verkauf")
-  : (tt(g, "buy",  "fields.searchedItem") || "Gesuchter Gegenstand");
+  ? (tt(g, "sell", "sell.fields.sellItem") || "Gegenstand zum Verkauf")
+  : (tt(g, "buy",  "sell.fields.searchedItem") || "Gesuchter Gegenstand");
 
 const rewardFieldName = order.type === "sell"
-  ? (tt(g, "sell", "fields.price") || "Preis")
-  : (tt(g, "buy",  "fields.reward") || "Belohnung");
+  ? (tt(g, "sell", "sell.fields.price") || "Preis")
+  : (tt(g, "buy",  "sell.fields.reward") || "Belohnung");
 
 const requesterName   = order.type === "sell"
-  ? (tt(g, "sell", "fields.seller") || "Verkäufer")
-  : (tt(g, "buy",  "fields.requester") || "Antragsteller");
+  ? (tt(g, "sell", "sell.fields.seller") || "Verkäufer")
+  : (tt(g, "buy",  "sell.fields.requester") || "Antragsteller");
   const embed = new EmbedBuilder()
   .setColor(0x4caf50)
   .setTitle(tt(g, order.type, "wizard.success.title") || "Auftrag erstellt")

@@ -120,7 +120,7 @@ export function registerSellFeature(client, deps) {
       .setTimestamp();
 
     if (itemInfo?.iconUrl) embed.setThumbnail(itemInfo.iconUrl);
-    embed.setURL(`https://classic.wowhead.com/item=${entry.wowItemId}`);
+    embed.setURL(`https://www.wowhead.com/mop-classic/de/item=${entry.wowItemId}`);
     return embed;
   }
 
